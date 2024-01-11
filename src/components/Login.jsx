@@ -3,11 +3,13 @@ import { validate } from "../utils/validation";
 import {auth} from "../utils/firebase"
 import {createUserWithEmailAndPassword,signInWithEmailAndPassword,updateProfile} from "firebase/auth";
 import Header from "./Header"
-import { useNavigate} from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser, removeUser } from "../utils/userSlice";
+import { AVATAR } from "../utils/constants";
 const Login = () => {
   const [currState,setCurrState] = useState(true);
   const [message,setMessage] = useState("");
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const name = useRef(null);
   const email = useRef(null);
   const password = useRef(null);
@@ -24,11 +26,13 @@ const Login = () => {
         //account is created(signup logic)
         const user = userCredential.user;
         updateProfile(user, {
-        displayName: name.current.value, photoURL: "https://avatars.githubusercontent.com/u/110677112?s=400&u=cc5e3864c307c454d0d6ab84e89a4a87f3870973&v=4"
+        displayName: name.current.value, photoURL: AVATAR
         }).then(() => {
-          navigate("/browse");
+          const {uid,email,displayName,photoURL} = auth.currentUser;
+          dispatch(addUser({uid:uid,emal:email,displayName:displayName,photoURL:photoURL}));
         }).catch((error) => {
-           setMessage(error.message);
+           setMessage(error);
+           dispatch(removeUser());
         });
       })
       .catch((error) => {
@@ -41,7 +45,6 @@ const Login = () => {
       signInWithEmailAndPassword(auth, email.current.value,password.current.value)
       .then((userCredential) => { 
         const user = userCredential.user;
-        navigate("/browse");
       })
       .catch((error) => {
         const errorCode = error.code;
